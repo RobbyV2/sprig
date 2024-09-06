@@ -6,21 +6,14 @@ import { signal } from '@preact/signals'
 import type { PersistenceState } from '../../../lib/state'
 import { getSession } from '../../../lib/game-saving/account'
 import { getGalleryGames } from '../../../lib/game-saving/gallery'
-import MobilePlayer from '../../../components/big-interactive-pages/mobile-player'
 import { mobileUserAgent } from '../../../lib/utils/mobile'
 import fs from 'fs'
 import path from 'path'
-import { dirname } from 'path'
-import { fileURLToPath } from 'url'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename);
-
 
 const session = await getSession(Astro.cookies)
 
 const filename = Astro.params.filename ?? ''
-const gameContentPath = path.resolve(__dirname, `../../../../games/${filename}.js`)
+const gameContentPath = path.resolve(`./games/${filename}.js`)
 const code = fs.readFileSync(gameContentPath).toString()
 if (code == null) {
 	return Astro.redirect('/404', 302)
