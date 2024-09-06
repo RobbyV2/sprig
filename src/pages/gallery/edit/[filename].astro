@@ -54,6 +54,8 @@ const persistenceState = signal<PersistenceState>({
 	session
 })
 const isMobile = mobileUserAgent(Astro.request.headers.get('user-agent') ?? '')
+
+if (isMobile) return Astro.redirect(`/gallery/${filename}`, 302)
 ---
 
 <html lang='en'>
@@ -61,14 +63,6 @@ const isMobile = mobileUserAgent(Astro.request.headers.get('user-agent') ?? '')
 	<StandardHead title={(name ?? filename) || 'Untitled'} />
 </head>
 <body>
-{isMobile ? (
-	<MobilePlayer
-		client:load
-		code={code}
-		gameName={(name ?? filename) || 'Untitled'}
-		authorName={authorName || ''}
-	/>
-) : (
 	<Editor
 		client:load
 		persistenceState={persistenceState}
@@ -77,8 +71,6 @@ const isMobile = mobileUserAgent(Astro.request.headers.get('user-agent') ?? '')
 			hideHelp: Astro.cookies.get('hideHelp').boolean()
 		}}
 	/>
-)}
-
 <script is:inline>
 	// There is no clear guidance there when it comes to handling device and browser-specific differentiations on mobile browsers,as such we need to do a custom implementation of vh
 	const calculateCSS = () => {
