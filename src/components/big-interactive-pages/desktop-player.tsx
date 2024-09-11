@@ -1,15 +1,23 @@
-import {useEffect, useRef, useState} from 'preact/hooks'
+import {useEffect, useRef} from 'preact/hooks'
 import { runGame } from '../../lib/engine'
 import styles from './desktop-player.module.css'
 import {
-	IoExpandOutline, IoOpen, IoPlay,
+	IoCodeSlash,
+	IoExpandOutline,
+	IoHeart,
+	IoHeartOutline, IoLogoFacebook, IoLogoReddit,
+	IoLogoTwitter,
+	IoOpen,
+	IoPlay,
+	IoShareOutline,
 	IoStopCircleOutline
 	,
 	IoSyncCircleOutline,
 	IoVolumeHighOutline,
-	IoVolumeMuteOutline, IoWarning
+	IoVolumeMuteOutline,
+	IoWarning
 } from "react-icons/io5";
-import {muted, cleanupRef, screenRef, errorLog, codeMirror} from "../../lib/state";
+import {muted, cleanupRef, errorLog} from "../../lib/state";
 import {useSignal} from "@preact/signals";
 import {exitFullscreen, fullscreenElement, requestFullscreen} from "../../lib/utils/fullscreen";
 import Button from "../design-system/button";
@@ -21,6 +29,8 @@ interface DesktopPlayerProps {
 	gameName: string
 	authorName: string
 	filename: string
+	isLoggedIn: boolean
+	hearted: boolean
 }
 
 export default function DesktopPlayer(props: DesktopPlayerProps) {
@@ -92,6 +102,44 @@ export default function DesktopPlayer(props: DesktopPlayerProps) {
 		}
 	};
 	
+	const hearted = useSignal(props.hearted)
+	
+	const upvoteGame = () => {
+		hearted.value = true
+		return fetch("/api/games/upvote", {
+			method: "POST",
+			body: JSON.stringify({
+				action: "upvote",
+				filename: props.filename
+			})
+		})
+	}
+	
+	const removeUpvote = () => {
+		hearted.value = false
+		return fetch("/api/games/upvote", {
+			method: "POST",
+			body: JSON.stringify({
+				action: "remove",
+				filename: props.filename
+			})
+		})
+	}
+	
+	const shareMenuOpen = useSignal(false)
+	const shareMenuRef = useRef<HTMLDivElement>(null);
+	
+	const closeOpenMenus = (e: MouseEvent) => {
+			if (shareMenuOpen.value && !shareMenuRef.current?.contains(e.target as Element)) {
+					shareMenuOpen.value = false;
+				}
+	}
+	
+	useEffect(() => {
+		document.addEventListener("mousedown", closeOpenMenus);
+		return () => document.removeEventListener("mousedown", closeOpenMenus);
+	}, [shareMenuRef]);
+	
 	return (
 		<div className={styles.rootContainer}>
 		<div className={styles.root}>
@@ -160,16 +208,46 @@ export default function DesktopPlayer(props: DesktopPlayerProps) {
 			</div>
 			<div className={styles.meta}>
 				<div>
-				<h1>{props.gameName}</h1>
-				{props.authorName ? (
-					<span className={styles.author}>
+					<div class={styles.title}>
+					<h1>{props.gameName}</h1>
+					<div class={styles.titleButtons}>
+						<div class={`${styles.button} ${hearted.value && styles.hearted}`}
+							 onClick={() => {
+								 hearted.value ? removeUpvote() : upvoteGame()
+							 }}
+						>{hearted.value ? <IoHeart/> : <IoHeartOutline/>}</div>
+						
+						<div ref={shareMenuRef} class={styles.shareButtonContainer}>
+							
+							<div class={styles.button} onClick={() => {
+							shareMenuOpen.value = !shareMenuOpen.value
+						}}><IoShareOutline/></div>
+							
+							{shareMenuOpen.value &&
+								<div class={styles.shareMenu} >
+									<Button class={styles.shareMenuButton} icon={IoLogoTwitter} accent>Post on <s>Twitter</s> X</Button>
+									<Button class={styles.shareMenuButton} icon={IoLogoReddit} accent>Share on Reddit</Button>
+									<Button class={styles.shareMenuButton} icon={IoLogoFacebook} accent>Post to Facebook</Button>
+									<Button class={styles.shareMenuButton} icon={IoCodeSlash} accent>Copy embed link</Button>
+								</div>
+							}
+							
+						</div>
+
+					</div>
+					</div>
+					{props.authorName ? (
+						<span className={styles.author}>
 						{' '}by {props.authorName}
 					</span>
-				) : null}
+					) : null}
+
 				</div>
-				<div class={styles.metaActions}>
+				<div>
+					<div class={styles.metaActions}>
 					<a href={`/gallery/edit/${props.filename}`}><Button accent>
 						<IoOpen/>Open in editor</Button></a>
+					
 					<Button
 						icon={
 							{
@@ -184,8 +262,9 @@ export default function DesktopPlayer(props: DesktopPlayerProps) {
 						Run on Device
 					</Button>
 				</div>
+				</div>
+				</div>
 			</div>
-		</div>
 		</div>
 	)
 }

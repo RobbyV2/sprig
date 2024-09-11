@@ -125,3 +125,48 @@
 .metaActions > button:not(:first-child){
 	margin-left: 8px;
 }
+
+.title {
+	display: flex;
+	justify-content: space-between;
+}
+
+.titleButtons {
+	display: flex;
+	align-items: center;
+	position: relative;
+}
+
+.button {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	margin-left: 10px;
+	position: relative;
+}
+
+.button > svg {
+	height: 30px;
+	width: auto;
+}
+
+.shareMenu {
+	position: absolute;
+	min-width: 180px;
+	bottom: -10px;
+	transform: translateY(100%);
+	right: 0;
+	cursor: auto;
+}
+
+.shareButtonContainer {
+	position: relative;
+}
+
+.shareMenuButton {
+	width: 100%;
+}
+
+.button.hearted > svg {
+	color: #ef2828;
+}

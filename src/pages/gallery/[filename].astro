@@ -1,9 +1,9 @@
 ---
+import {findDocument} from "../../lib/game-saving/account";
+
 import '../../global.css'
 import DesktopPlayer from "../../components/big-interactive-pages/desktop-player";
 import StandardHead from '../../components/standard-head.astro'
-import { signal } from '@preact/signals'
-import {PersistenceState, switchTheme, theme, type ThemeType} from '../../lib/state'
 import { getSession } from '../../lib/game-saving/account'
 import { getGalleryGames } from '../../lib/game-saving/gallery'
 import MobilePlayer from '../../components/big-interactive-pages/mobile-player'
@@ -37,18 +37,15 @@ const metadata = games.find(game => game.filename === filename)
 const name = metadata?.title
 const authorName = metadata?.author
 
-const persistenceState = signal<PersistenceState>({
-	kind: 'SHARED',
-	name: (name ?? filename) || 'Untitled',
-	authorName: authorName || '',
-	code: code,
-	stale: false,
-	tutorial,
-	tutorialName: tutorial ? filename : undefined,
-	tutorialIndex: 0,
-	session
-})
 const isMobile = mobileUserAgent(Astro.request.headers.get('user-agent') ?? '')
+
+const isLoggedIn = !!session
+
+const hearted = isLoggedIn && await findDocument('upvotes', [
+	['filename', '==', filename],
+	['userId', '==', session.user.id]
+]).then(records => !records.empty)
+
 ---
 
 <html lang='en'>
@@ -72,13 +69,15 @@ const isMobile = mobileUserAgent(Astro.request.headers.get('user-agent') ?? '')
 		authorName={authorName || ''}
 	/>
 ) : (
-	<Navbar session={session } />
+	<Navbar session={session} />
 	<DesktopPlayer
 		client:load
 		code={code}
 		gameName={(name ?? filename) || 'Untitled'}
 		authorName={authorName || ''}
 		filename={filename}
+		hearted={hearted}
+		isLoggedIn={isLoggedIn}
 	/>
 )}
 </body>
